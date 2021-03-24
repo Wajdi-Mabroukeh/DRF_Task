@@ -1,14 +1,11 @@
-from django.shortcuts import render
-
-# Create your views here.
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from .models import Account
+from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import IsAuthenticated
 
-class HelloView(APIView):
-    permission_classes = (IsAuthenticated,)
+from .serializers import RegisterSerializer
 
-    def get(self, request):
-        content = {'message': 'Hello, World!'}
-        return Response(content)
+
+class RegisterView(CreateAPIView):
+    queryset = Account.objects.all()
+    permission_classes = (IsAuthenticated,)
+    serializer_class = RegisterSerializer

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 
-from .models import Account, City, Address, Country, AccountType
+from .models import Account, Address
 
 
 class AccountInline(admin.StackedInline):
@@ -23,7 +23,3 @@ class CustomUserAdmin(UserAdmin):
 
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
-admin.site.register(City)
-admin.site.register(Country)
-admin.site.register(Address)
-admin.site.register(AccountType)
