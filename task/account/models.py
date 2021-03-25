@@ -13,10 +13,10 @@ account_type = (
 class Address(models.Model):
     name = models.CharField(max_length=200)
     city = models.CharField(max_length=100)
-    county = models.CharField(max_length=100)
+    country = models.CharField(max_length=100)
 
     class Meta:
-        unique_together = [['name', 'city', 'county']]
+        unique_together = [['name', 'city', 'country']]
         verbose_name_plural = 'Addresses'
 
     def __str__(self):
@@ -26,7 +26,7 @@ class Address(models.Model):
 class Account(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     account_type = models.CharField(max_length=50, null=True, choices=account_type)
-    addresses = models.ManyToManyField(Address)
+    addresses = models.ManyToManyField(Address, blank=True)
 
     def __str__(self):
         return self.user.username

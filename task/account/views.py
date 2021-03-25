@@ -1,22 +1,17 @@
-import json
-
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.core.validators import validate_email
 from django.http import JsonResponse
 from rest_framework import status
+from rest_framework.authtoken.models import Token
 from rest_framework.exceptions import ValidationError
+from rest_framework.generics import CreateAPIView, ListCreateAPIView
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Account, Address
-from rest_framework.generics import CreateAPIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.validators import UniqueValidator
-from django.contrib.auth.password_validation import validate_password
-from django.core.validators import validate_email
-from django.contrib.auth import authenticate, login
-from rest_framework.authtoken.models import Token
-
-from .serializers import AccountSerializer
+from .models import Address
+from .serializers import AccountSerializer, UserSerializer
 
 
 def is_validate(**kwargs):
@@ -62,15 +57,14 @@ class RegisterView(CreateAPIView):
         )
 
         user.set_password(password)
-        user.save()
 
         user.account.account_type = account_type
         if addresses:
             for address_temp in addresses:
-                Address.objects.get_or_create(account=user.account,
-                                              city=address_temp.get('city'),
-                                              name=address_temp.get('name'),
-                                              county=address_temp.get('country'))
+                address, _ = Address.objects.get_or_create(city=address_temp.get('city'),
+                                                        name=address_temp.get('name'),
+                                                        country=address_temp.get('country'))
+                user.account.addresses.add(address)
 
         user.save()
         data = AccountSerializer(user.account).data
@@ -90,3 +84,27 @@ class LoginView(CreateAPIView):
             return JsonResponse(data)
         else:
             raise ValidationError({"login": "invalid login"})
+
+
+class AccountList(ListCreateAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = UserSerializer
+    pagination_class = PageNumberPagination
+
+    def list(self, request, *args, **kwargs):
+        username = request.query_params.get('username')
+        first_name = request.query_params.get('first_name')
+        last_name = request.query_params.get('last_name')
+        query = User.objects
+
+        if username and username.strip():
+            query = query.filter(username__contains=username)
+        if first_name and first_name.strip():
+            query = query.filter(first_name__contains=first_name)
+        if last_name and last_name.strip():
+            query = query.filter(last_name__contains=last_name)
+
+        users = query.all()
+        page = self.paginate_queryset(users)
+        serializer = UserSerializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
