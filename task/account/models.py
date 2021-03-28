@@ -16,7 +16,7 @@ class Address(models.Model):
     country = models.CharField(max_length=100)
 
     class Meta:
-        unique_together = [['name', 'city', 'country']]
+        # unique_together = [['name', 'city', 'country']]
         verbose_name_plural = 'Addresses'
 
     def __str__(self):

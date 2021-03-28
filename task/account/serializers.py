@@ -12,6 +12,12 @@ class AddressSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class UserBasicInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'email')
+
+
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         required=True,
@@ -57,16 +63,17 @@ class AccountSerializer(serializers.ModelSerializer):
         user_data.pop('password2')
         password = user_data.pop('password')
 
-        user = User.objects.create_user(user_data)
+        user = User.objects.create_user(**user_data)
         user.set_password(password)
         user.account.account_type = account_type
-        user.save()
 
         if addresses:
             for address_temp in addresses:
-                Address.objects.get_or_create(account=user.account,
-                                              city=address_temp.get('city'),
-                                              name=address_temp.get('name'),
-                                              country=address_temp.get('country'))
+                address, _ = Address.objects.get_or_create(city=address_temp.get('city'),
+                                                           name=address_temp.get('name'),
+                                                           country=address_temp.get('country'))
+                user.account.addresses.add(address)
+
+        user.save()
 
         return user.account
